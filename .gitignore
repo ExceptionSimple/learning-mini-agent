@@ -1,0 +1,5 @@
+.env
+.claude
+.idea
+article.txt
+__pycache__

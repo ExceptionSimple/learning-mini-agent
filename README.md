@@ -1,0 +1,17 @@
+- **ch01**: 最小 Agent Loop + 最小记忆
+- **ch02**: Tool Use
+- **ch03**: Permission
+- **ch04**: Session 管理
+- **ch05**: Hook
+- **ch06**: subagent
+- **ch07**: skills
+- **ch08**: Memory
+- **ch09**: Prompt
+- **ch10**: Error Recovery
+- **ch11**: Tasks **对 loop 没有变动，只是新添加了 task.py 和 tool.py 添加了几个工具**
+    - 后期测试：能不能让 create_task 在一开始就创建好 N 个任务，而不是创建一个完成一个。即：**先建全所有任务，后依次执行**。
+- **ch12**: 后台任务
+    - 对于 ch13 的【后期测试】：在 ch14 中可以先规划，后执行。
+    - 将 blog-server 转 vue3 项目，一开始执行了 四次 create_task，但是 claim_task 申请任务环节在 `.task/xxx.json` 找不到任务。
+- **ch15**: 定时任务
+
