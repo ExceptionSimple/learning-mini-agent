@@ -9,6 +9,7 @@ from pathlib import Path
 WORKDIR = Path.cwd()
 
 from llm.chat_model import DeepSeekChat
+from permission import check_permission
 
 
 chat = DeepSeekChat(
@@ -50,6 +51,13 @@ def agent_loop(messages: list):
         })
 
         for tool in tool_calls:
+            if not check_permission(tool):
+                messages.append({
+                    "role": "tool",
+                    "tool_call_id": tool['id'],
+                    "content": "Permission denied."
+                })
+                continue
             print(f"\033[33m[tool] {tool['function']['name']}\033[0m")
             handler = TOOL_CALL_MAP[tool['function']['name']]
             result = handler(**json.loads(tool['function']['arguments']))
