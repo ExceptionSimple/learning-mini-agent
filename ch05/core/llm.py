@@ -1,10 +1,11 @@
-import os
 from dotenv import load_dotenv
 load_dotenv()
 
 import requests
 import json
 import logging
+
+from tools.structed_tool import ToolCall
 
 logger = logging.getLogger(__name__)
 
@@ -29,21 +30,11 @@ options = {
   "top_logprobs": None
 }
 
-def tool_to_openai(tool) -> dict:
-    """把自定义工具实例转成 OpenAI 工具格式，供 tools 参数使用。"""
-    return {
-        "type": "function",
-        "function": {
-            "name": tool.name,
-            "description": tool.description,
-            "parameters": tool.args_schema,
-        },
-    }
-
-class DeepSeekChat:
+class DeepSeekLLM:
     def __init__(self,
                  api_key: str = None,
-                 base_url: str = None):
+                 base_url: str = None
+        ):
         self.headers = {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
@@ -53,7 +44,7 @@ class DeepSeekChat:
         self.api_key = api_key
         # 输出槽位：每次请求后记录最近一次结果（messages 由外部维护，不存实例）
         self.finish_reason = None
-        self.tool_calls = []
+        self.tool_calls: list[ToolCall] = []
 
     def _build_options(self,
                        messages: list,
@@ -99,7 +90,6 @@ class DeepSeekChat:
         logger.info('收到响应: id=%s, finish_reason=%s', id, finish_reason)
 
         self.finish_reason = finish_reason
-        self.tool_calls = tool_calls
 
         return {
             'id': id,
@@ -115,7 +105,7 @@ class DeepSeekChat:
                thinking: bool = False,
                tools: list = None,
                max_tokens: int = 4096,
-               model: str = "deepseek-chat"):
+               model: str = None):
         # 无状态流式请求：messages 由外部传入，逐段 yield ('reasoning'|'content', delta)
         payload = self._build_options(messages, thinking, tools, max_tokens, model, stream=True)
         response = requests.request("POST", self.base_url, headers=self.headers, data=json.dumps(payload), stream=True)
@@ -168,7 +158,13 @@ class DeepSeekChat:
                         else:
                             tool_calls.append(item)
         finally:
-            self.tool_calls = tool_calls
+            self.tool_calls = []
+            for tool_call in tool_calls:
+                self.tool_calls.append(ToolCall(
+                    tool_id=tool_call['id'],
+                    name=tool_call['function']['name'],
+                    tool_input=json.loads(tool_call['function']['arguments']),
+                ))
 
 
 # if __name__ == "__main__":
