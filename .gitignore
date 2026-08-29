@@ -3,3 +3,5 @@
 .idea
 article.txt
 __pycache__
+.sessions
+.memory
