@@ -19,6 +19,10 @@
     - 子代理工具集隔离（`SUB_TOOLS` 无 `task`）+ `SUB_SYSTEM` 显式 `Do not delegate further.`，双层防无限委派。
     - 重构 `core/llm.py` 的 `invoke()`：抽取 `_parse_tool_calls()`、输出槽位与 `stream()` 对齐、新增 400 错误诊断。
 - **ch08**: skills
+    - 新增 `skills.py`：技能注册表 `SKILL_REGISTRY` + `_scan_skills()` 扫描 `skills/` 目录，解析 `SKILL.md` 的 YAML frontmatter。
+    - 新增 `skills/pokemon/SKILL.md` 示例技能（宝可梦天命匹配师），目录先注入系统提示词、正文按需 `load_skill` 懒加载。
+    - 新增 `load_skill` 工具（`tool.py`），按名返回技能全文。
+    - `main.py` 启动 `scan_skills()` 并把技能清单拼进 system prompt；`core/agent.py` 清理未用 import。
 - **ch09**: Memory
 - **ch10**: Prompt
 - **ch11**: Error Recovery
