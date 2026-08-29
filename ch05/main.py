@@ -2,14 +2,12 @@ import os
 import uuid
 
 from dotenv import load_dotenv
-
-from tool import TOOLS
-
 load_dotenv()
 
 from pathlib import Path
 WORKDIR = Path.cwd()
 
+from tool import TOOLS
 from core.llm import DeepSeekLLM
 from session_manage import recovery_sessions, write_sessions
 from core.agent import Agent
