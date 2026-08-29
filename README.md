@@ -2,7 +2,14 @@
 - **ch02**: Tool Use
 - **ch03**: Permission
 - **ch04**: Session 管理
-- **ch05**: Hook
+- **ch05**: 架构升级
+    - 工具从裸 dict 升级为 `StructuredTool` 对象，新增工具只需加一个实例，由 `tool_to_openai()` 统一序列化。
+    - `tool_calls` 从裸 dict 升级为 `ToolCall` 对象，参数解析与 API 回传序列化职责收敛到 `to_openai()`。
+    - Agent 编排从模块级函数升级为 `Agent` 类，`llm` 与 `tools` 改为构造注入（依赖注入）。
+    - LLM 客户端 `DeepSeekChat` → `DeepSeekLLM` 并移入新增的 `core/` 包，`stream()` 直接返回 `list[ToolCall]`。
+    - 目录分层：新增 `core/`（编排）与 `tools/`（工具实现）两个包，工具实现与定义分离。
+    - 新增 `core/types.py` 类型层（`LLMMessage`），模型名改从环境变量读取。
+- **ch06**: Hook
 - **ch06**: subagent
 - **ch07**: skills
 - **ch08**: Memory
