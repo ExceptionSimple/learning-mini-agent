@@ -18,6 +18,8 @@ class Agent:
     def agent_loop(self, messages: list):
         while True:
             in_reasoning = False
+            reasoning_content = ""
+            answer_content = ""
             for kind, delta in self.llm.stream(
                     messages=messages,
                     model=os.environ.get("DEEPSEEK_MODEL"),
@@ -28,12 +30,20 @@ class Agent:
                     if not in_reasoning:
                         print('\n\033[94m-----------------[思考]------------------\033[0m\n')
                     in_reasoning = True
+                    reasoning_content += delta
                 else:
                     if in_reasoning:
                         print('\n\n\033[94m-----------------[回答]------------------\033[0m\n')
                     in_reasoning = False
+                    answer_content += delta
                 print(delta, end='')
             print()
+
+            if answer_content is not None and answer_content.strip() != "":
+                messages.append({
+                    "role": "assistant",
+                    "content": answer_content,
+                })
 
             if self.llm.finish_reason == 'stop':
                 break
