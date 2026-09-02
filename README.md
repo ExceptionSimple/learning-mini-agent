@@ -23,13 +23,17 @@
     - 新增 `skills/pokemon/SKILL.md` 示例技能（宝可梦天命匹配师），目录先注入系统提示词、正文按需 `load_skill` 懒加载。
     - 新增 `load_skill` 工具（`tool.py`），按名返回技能全文。
     - `main.py` 启动 `scan_skills()` 并把技能清单拼进 system prompt；`core/agent.py` 清理未用 import。
-- **ch09**: Memory
-- **ch10**: Prompt
-- **ch11**: Error Recovery
-- **ch12**: Tasks **对 loop 没有变动，只是新添加了 task.py 和 tool.py 添加了几个工具**
+- **ch09**: Context 上下文压缩
+    - 新增 `context.py`：规划 L1~L4 四层压缩 + 应急（裁剪 / 工具结果占位 / 大结果落盘预览 / LLM 摘要），当前仅 L4 `compact_history` 接线。
+    - 新增 `compact` 工具（`tool.py`，`func=None`）+ `core/agent.py` 特殊分支：模型调用后保留 system、把其余消息交给 LLM 摘要并原地替换 `messages`。
+    - 压缩前消息落盘 `transcript/transcript_{ts}.jsonl` 留痕，摘要走 `invoke()` 非流式通道。
+- **ch10**: Memory
+- **ch11**: Prompt
+- **ch12**: Error Recovery
+- **ch13**: Tasks **对 loop 没有变动，只是新添加了 task.py 和 tool.py 添加了几个工具**
     - 后期测试：能不能让 create_task 在一开始就创建好 N 个任务，而不是创建一个完成一个。即：**先建全所有任务，后依次执行**。
-- **ch13**: 后台任务
+- **ch14**: 后台任务
     - 对于 ch13 的【后期测试】：在 ch14 中可以先规划，后执行。
     - 将 blog-server 转 vue3 项目，一开始执行了 四次 create_task，但是 claim_task 申请任务环节在 `.task/xxx.json` 找不到任务。
-- **ch14**: 定时任务
+- **ch15**: 定时任务
 
