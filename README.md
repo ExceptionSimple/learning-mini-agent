@@ -41,7 +41,10 @@
     - 新增 `error_recovery.py`：LLM 调用错误修复原语（`RecoveryState` 恢复状态 + `classify_transient` 错误分类 + `retry_delay` 指数退避 / `with_retry` 非流式 / `stream_with_recovery` 流式重试封装）；错误语义按 DeepSeek 官方错误码（429 限流 / 500·503 繁忙 / 401·402·422 非瞬时不重试；无 529）。
     - 三条恢复路径：`finish_reason=="length"` max_tokens 截断 → 升档 4096→8192 重发、再截断则存截断输出 + 续写提示（≤3 次）；400 上下文超长 → 复用 ch09 `context.reactive_compact` 应急压缩一次后重发；429/5xx → 指数退避、连续 3 次繁忙切 `DEEPSEEK_FALLBACK_MODEL`。
     - `core/agent.py`：`agent_loop` 的流式调用由裸调改为 `stream_with_recovery` + try/except（记录 `[Error]` 结束而非崩溃），修掉旧版对 `length` 无限 `continue` 的隐性 bug；其余文件与 ch11 一致。
-- **ch13**: Tasks **对 loop 没有变动，只是新添加了 task.py 和 tool.py 添加了几个工具**
+- **ch13**: Tasks 持久任务看板
+    - 新增 `task.py`：任务从 ch06 的内存 todo 升级为落盘 `.tasks/task_*.json`（`Task` dataclass：id/subject/description/status/owner/blockedBy）；`claim_task` 仅 pending 且依赖全 completed 才放行，`complete_task` 把解锁的下游任务拼进返回值喂回 LLM。
+    - `tool.py` 注册 5 个任务工具（create_task / list_tasks / get_task / claim_task / complete_task），工具 8→13；**对 agent_loop 零改动**——走 `TOOL_CALL_MAP` 通用分发，ch11 的 `enabled_tools` 运行时推导让它自动进 system prompt；subagent `SUB_TOOLS` 保持隔离，任务规划不泄漏给子代理。
+    - `.gitignore` 补 `.tasks`。
     - 后期测试：能不能让 create_task 在一开始就创建好 N 个任务，而不是创建一个完成一个。即：**先建全所有任务，后依次执行**。
 - **ch14**: 后台任务
     - 对于 ch13 的【后期测试】：在 ch14 中可以先规划，后执行。

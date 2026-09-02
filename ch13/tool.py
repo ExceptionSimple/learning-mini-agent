@@ -4,6 +4,10 @@ from tools.structed_tool import tool_to_openai, StructuredTool
 from tools.base_tools import run_bash, run_edit, run_glob, run_read, run_write
 from subagent import spawn_subagent
 from skills import load_skill
+from task import (
+    run_create_task, run_list_tasks, run_get_task,
+    run_claim_task, run_complete_task,
+)
 
 WORKDIR = Path.cwd()
 
@@ -113,6 +117,57 @@ TOOL_DEFINITIONS = [
             }
         },
         func=None
+    ),
+    # ── 任务系统（ch13）：落盘到 .tasks/*.json，带 blockedBy 依赖门禁 ──
+    StructuredTool(
+        name="create_task",
+        description="Create a new task with optional blockedBy dependencies.",
+        args_schema={
+            "type": "object",
+            "properties": {
+                "subject": {"type": "string"},
+                "description": {"type": "string"},
+                "blockedBy": {"type": "array", "items": {"type": "string"}},
+            },
+            "required": ["subject"],
+        },
+        func=run_create_task,
+    ),
+    StructuredTool(
+        name="list_tasks",
+        description="List all tasks with status, owner, and dependencies.",
+        args_schema={"type": "object", "properties": {}, "required": []},
+        func=run_list_tasks,
+    ),
+    StructuredTool(
+        name="get_task",
+        description="Get full details of a specific task by ID.",
+        args_schema={
+            "type": "object",
+            "properties": {"task_id": {"type": "string"}},
+            "required": ["task_id"],
+        },
+        func=run_get_task,
+    ),
+    StructuredTool(
+        name="claim_task",
+        description="Claim a pending task. Sets owner, changes status to in_progress.",
+        args_schema={
+            "type": "object",
+            "properties": {"task_id": {"type": "string"}},
+            "required": ["task_id"],
+        },
+        func=run_claim_task,
+    ),
+    StructuredTool(
+        name="complete_task",
+        description="Complete an in-progress task. Reports unblocked downstream tasks.",
+        args_schema={
+            "type": "object",
+            "properties": {"task_id": {"type": "string"}},
+            "required": ["task_id"],
+        },
+        func=run_complete_task,
     )
 ]
 

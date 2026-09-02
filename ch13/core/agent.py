@@ -114,6 +114,7 @@ class Agent:
                 messages.append({
                     "role": "assistant",
                     "content": answer_content,
+                    "reasoning_content": reasoning_content
                 })
 
             if self.llm.finish_reason == 'stop':
