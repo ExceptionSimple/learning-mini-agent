@@ -38,6 +38,9 @@
     - `update_context()` 推导真实状态 → `get_system_prompt()` 拼接并带缓存（确定性 `json.dumps` cache key；首次 `[assembled]`、未变 `[cache hit]`），静态段顺序稳定利于服务端 prefix 缓存。
     - `main.py` 仅把 system 拼接移交 prompt.py（移除 `WORKDIR` 与两个 build_* 内联调用）；主循环与 memory hook 均不变。
 - **ch12**: Error Recovery
+    - 新增 `error_recovery.py`：LLM 调用错误修复原语（`RecoveryState` 恢复状态 + `classify_transient` 错误分类 + `retry_delay` 指数退避 / `with_retry` 非流式 / `stream_with_recovery` 流式重试封装）；错误语义按 DeepSeek 官方错误码（429 限流 / 500·503 繁忙 / 401·402·422 非瞬时不重试；无 529）。
+    - 三条恢复路径：`finish_reason=="length"` max_tokens 截断 → 升档 4096→8192 重发、再截断则存截断输出 + 续写提示（≤3 次）；400 上下文超长 → 复用 ch09 `context.reactive_compact` 应急压缩一次后重发；429/5xx → 指数退避、连续 3 次繁忙切 `DEEPSEEK_FALLBACK_MODEL`。
+    - `core/agent.py`：`agent_loop` 的流式调用由裸调改为 `stream_with_recovery` + try/except（记录 `[Error]` 结束而非崩溃），修掉旧版对 `length` 无限 `continue` 的隐性 bug；其余文件与 ch11 一致。
 - **ch13**: Tasks **对 loop 没有变动，只是新添加了 task.py 和 tool.py 添加了几个工具**
     - 后期测试：能不能让 create_task 在一开始就创建好 N 个任务，而不是创建一个完成一个。即：**先建全所有任务，后依次执行**。
 - **ch14**: 后台任务
