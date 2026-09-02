@@ -33,6 +33,10 @@
     - `trigger_hook` 改为"执行全部回调、返回末个非 None"，支撑同一事件多回调（会话保存 + 记忆抽取并存）。
     - `main.py` system prompt 拼入记忆目录；`consolidate_memories` 用于 ≥10 条时合并去重（含空结果保护）。
 - **ch11**: Prompt
+    - 新增 `prompt.py`：把 ch10 内联拼的 system prompt 拆成「静态段 + 动态段」，identity / tools / subagent / todo_reminder 顺序固定常载，skills / memory_index 有资源才按需占位。
+    - `tools` 段由 `TOOLS` schema 运行时推导（模型"知道"自己的工具，工具增删自动生效）；`identity` 保留原中文人设并把工作目录并入。
+    - `update_context()` 推导真实状态 → `get_system_prompt()` 拼接并带缓存（确定性 `json.dumps` cache key；首次 `[assembled]`、未变 `[cache hit]`），静态段顺序稳定利于服务端 prefix 缓存。
+    - `main.py` 仅把 system 拼接移交 prompt.py（移除 `WORKDIR` 与两个 build_* 内联调用）；主循环与 memory hook 均不变。
 - **ch12**: Error Recovery
 - **ch13**: Tasks **对 loop 没有变动，只是新添加了 task.py 和 tool.py 添加了几个工具**
     - 后期测试：能不能让 create_task 在一开始就创建好 N 个任务，而不是创建一个完成一个。即：**先建全所有任务，后依次执行**。
