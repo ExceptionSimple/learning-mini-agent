@@ -28,6 +28,10 @@
     - 新增 `compact` 工具（`tool.py`，`func=None`）+ `core/agent.py` 特殊分支：模型调用后保留 system、把其余消息交给 LLM 摘要并原地替换 `messages`。
     - 压缩前消息落盘 `transcript/transcript_{ts}.jsonl` 留痕，摘要走 `invoke()` 非流式通道。
 - **ch10**: Memory
+    - 新增 `memory.py` 记忆系统：`.memory/<slug>.md`（嵌套 frontmatter）+ `MEMORY.md` 自动索引，类型分 user/feedback/project/reference。
+    - 全 hook 接线：新增 `before_turn_call` 事件注入相关记忆（`load_memories`，LLM 选择 + 关键词兜底）；`after_turn_call` 复挂抽取回调（`extract_memories` 落盘）。
+    - `trigger_hook` 改为"执行全部回调、返回末个非 None"，支撑同一事件多回调（会话保存 + 记忆抽取并存）。
+    - `main.py` system prompt 拼入记忆目录；`consolidate_memories` 用于 ≥10 条时合并去重（含空结果保护）。
 - **ch11**: Prompt
 - **ch12**: Error Recovery
 - **ch13**: Tasks **对 loop 没有变动，只是新添加了 task.py 和 tool.py 添加了几个工具**
