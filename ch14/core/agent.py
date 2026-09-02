@@ -20,6 +20,11 @@ from error_recovery import (
     is_prompt_too_long_error,
     reactive_compact,
 )
+from background_task import (
+    should_run_background,
+    start_background_task,
+    collect_background_results,
+)
 
 def before_tool_call(context: ToolCallHookContext) -> bool:
     cprint("[HOOK] before_tool_call", color="bright_cyan")
@@ -44,6 +49,14 @@ class Agent:
         state = RecoveryState()
         max_tokens = DEFAULT_MAX_TOKENS
         while True:
+            # ch14: 每轮开头拾取已完成的后台任务，以 <task_notification> 注入消息。
+            # 若末尾正是 user 消息（新问题的首轮，含 before_turn_call 注记忆的场景），
+            # 就近合并避免出现两连 user 消息；否则追加一条 user 消息让模型看到结果。
+            for note in collect_background_results():
+                if messages and messages[-1].get("role") == "user":
+                    messages[-1]["content"] = f"{messages[-1]['content']}\n\n{note}"
+                else:
+                    messages.append({"role": "user", "content": note})
             in_reasoning = False
             reasoning_content = ""
             answer_content = ""
@@ -149,8 +162,21 @@ class Agent:
                     messages[:] = [system_msg] + compact_history_msg
                     break
 
-                handler = TOOL_CALL_MAP[tool.name]
-                result = handler(**tool.tool_input)
+                # ch14: 慢命令（install/build/test…）或模型显式 run_in_background 转后台执行，
+                # 立即回占位结果让主循环继续转；完成后由下轮顶部注入 <task_notification>。
+                if should_run_background(tool.name, tool.tool_input):
+                    bg_id = start_background_task(tool)
+                    result = (f"[Background task started with ID {bg_id}] "
+                              f"command is running in the background; "
+                              f"you will be notified via <task_notification> "
+                              f"when it completes.")
+                else:
+                    # run_in_background 只是前后台决策字段，不传给底层 handler
+                    #（run_bash 等签名不接收该 kwarg，硬传会 TypeError）
+                    kwargs = {k: v for k, v in tool.tool_input.items()
+                              if k != "run_in_background"}
+                    handler = TOOL_CALL_MAP[tool.name]
+                    result = handler(**kwargs)
                 tool_call_context.tool_result = result
                 messages.append({
                     "role": "tool",

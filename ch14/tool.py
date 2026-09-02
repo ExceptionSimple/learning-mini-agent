@@ -20,6 +20,9 @@ TOOL_DEFINITIONS = [
             "type": "object",
             "properties": {
                 "command": {"type": "string", "description": "The shell command to run."},
+                # s13: 对齐真实 Claude Code —— 模型可显式声明后台执行，should_run_background 据此命中
+                "run_in_background": {"type": "boolean",
+                                      "description": "Run in the background, return immediately."},
             },
             "required": ["command"],
         },

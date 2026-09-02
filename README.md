@@ -46,8 +46,10 @@
     - `tool.py` 注册 5 个任务工具（create_task / list_tasks / get_task / claim_task / complete_task），工具 8→13；**对 agent_loop 零改动**——走 `TOOL_CALL_MAP` 通用分发，ch11 的 `enabled_tools` 运行时推导让它自动进 system prompt；subagent `SUB_TOOLS` 保持隔离，任务规划不泄漏给子代理。
     - `.gitignore` 补 `.tasks`。
     - 后期测试：能不能让 create_task 在一开始就创建好 N 个任务，而不是创建一个完成一个。即：**先建全所有任务，后依次执行**。
-- **ch14**: 后台任务
-    - 对于 ch13 的【后期测试】：在 ch14 中可以先规划，后执行。
-    - 将 blog-server 转 vue3 项目，一开始执行了 四次 create_task，但是 claim_task 申请任务环节在 `.task/xxx.json` 找不到任务。
+- **ch14**: background_task 后台任务
+    - 新增 `background_task.py`：耗时 bash 命令（npm install / build / test 等，`is_slow_operation` 关键字启发式，仅 bash）丢进 daemon 线程异步执行；`should_run_background` 显式 `run_in_background` 优先、未表态才走启发式，模拟真实 Claude Code 的 `background:true`（s13）。
+    - `core/agent.py`：工具分发命中后台即回 `[Background task started with ID bg_xxxx]` 占位结果（`tool_call_id` 对齐，工具消息不悬空、API 不报错）；每轮循环顶部 `collect_background_results` 把完成的 `<task_notification>`（200 字摘要，锁内 pop 防重复）注入下一轮，模型无需轮询即可收到结果继续干活。
+    - `tool.py`：bash `args_schema` 补 `run_in_background`（bool）参数让模型可显式前后台（工具总数仍 13）；该字段只做决策、执行前剥离，不传给 `run_bash`。
+    - 后台状态存进程内存（模块级 dict + 锁）、daemon 线程随进程退出即止；后台仍复用 `run_bash` 的 120s 超时；prompt / main / task / subagent / memory / error_recovery 零改动。
 - **ch15**: 定时任务
 
