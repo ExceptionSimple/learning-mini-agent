@@ -8,6 +8,9 @@ from task import (
     run_create_task, run_list_tasks, run_get_task,
     run_claim_task, run_complete_task,
 )
+from scheduler import (
+    run_schedule_cron, run_list_crons, run_cancel_cron,
+)
 
 WORKDIR = Path.cwd()
 
@@ -171,7 +174,44 @@ TOOL_DEFINITIONS = [
             "required": ["task_id"],
         },
         func=run_complete_task,
-    )
+    ),
+    # ── 定时任务（ch15）：cron 表达式注册 / 列出 / 取消，到点由 agent_loop 注入 prompt ──
+    StructuredTool(
+        name="schedule_cron",
+        description="Schedule a cron job. cron is 5-field: min hour dom month dow.",
+        args_schema={
+            "type": "object",
+            "properties": {
+                "cron": {"type": "string",
+                         "description": "5-field cron expression"},
+                "prompt": {"type": "string",
+                           "description": "Message to inject when fired"},
+                "recurring": {"type": "boolean",
+                              "description": "True=recurring, False=one-shot"},
+                "durable": {"type": "boolean",
+                            "description": "True=persist to disk"},
+            },
+            "required": ["cron", "prompt"],
+        },
+        func=run_schedule_cron,
+    ),
+    StructuredTool(
+        name="list_crons",
+        description="List all registered cron jobs.",
+        args_schema={"type": "object", "properties": {},
+                     "required": []},
+        func=run_list_crons,
+    ),
+    StructuredTool(
+        name="cancel_cron",
+        description="Cancel a cron job by ID.",
+        args_schema={
+            "type": "object",
+            "properties": {"job_id": {"type": "string"}},
+            "required": ["job_id"],
+        },
+        func=run_cancel_cron,
+    ),
 ]
 
 # 交给自己的 core/llm.py 序列化成 OpenAI 工具格式

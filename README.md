@@ -51,5 +51,9 @@
     - `core/agent.py`：工具分发命中后台即回 `[Background task started with ID bg_xxxx]` 占位结果（`tool_call_id` 对齐，工具消息不悬空、API 不报错）；每轮循环顶部 `collect_background_results` 把完成的 `<task_notification>`（200 字摘要，锁内 pop 防重复）注入下一轮，模型无需轮询即可收到结果继续干活。
     - `tool.py`：bash `args_schema` 补 `run_in_background`（bool）参数让模型可显式前后台（工具总数仍 13）；该字段只做决策、执行前剥离，不传给 `run_bash`。
     - 后台状态存进程内存（模块级 dict + 锁）、daemon 线程随进程退出即止；后台仍复用 `run_bash` 的 120s 超时；prompt / main / task / subagent / memory / error_recovery 零改动。
-- **ch15**: 定时任务
+- **ch15**: cron 定时任务
+    - 新增 `scheduler.py`（纯 stdlib 调度器，参考实现原样接入）：`CronJob` + 5 段 cron 校验/匹配（标准语义，日/周双受限取 OR）+ daemon `cron_scheduler_loop` 每秒轮询到点入队 `cron_queue`（按分钟去重）；`recurring`/`durable` 区分循环/一次性，durable 落盘 `.scheduled_tasks.json`、重启自动恢复；register/fire/cancel/error 诊断经 `cron_log` 写 `scheduler.log`，不再刷终端。
+    - `tool.py` 追加 schedule_cron / list_crons / cancel_cron 3 个工具（工具 13→16），入口 `run_*` 返回给模型的字符串；对 `agent_loop` **零改动**——走 ch13 通用分发 + ch11 运行时推导自动进 system prompt。
+    - `main.py` 参考 s15 重构：抽公共 `run_turn`，新增 `queue_processor_loop` daemon 线程——agent 空闲（`agent_lock` 非阻塞抢占）时把到点 cron 任务投递成一轮 `[cron] …` 新回合，与用户回合共用 `agent_lock` 串行化、绝不打断进行中的对话；cron 回合 stdout 经 `run_turn_logged` 整体重定向进 `scheduler.log`，用户回合输出不受影响；空输入（裸回车）过滤。
+    - `core/agent.py` / `background_task.py` 与 ch14 逐字一致（cron 不进 agent_loop，后台任务机制原样保留）；`.gitignore` 补 `.scheduled_tasks.json`、`scheduler.log`。
 

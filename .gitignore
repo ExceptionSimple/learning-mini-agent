@@ -6,6 +6,11 @@ __pycache__
 .sessions
 .memory
 .tasks
+.scheduled_tasks.json
+scheduler.log
 tools_自动推测 Schame.py
 resources
 transcript
+happy.log
+blog
+*.log
