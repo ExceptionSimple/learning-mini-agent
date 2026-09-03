@@ -1,3 +1,5 @@
+## 章节
+
 - **ch01**: 最小 Agent Loop + 最小记忆
 - **ch02**: Tool Use
 - **ch03**: Permission
@@ -57,3 +59,23 @@
     - `main.py` 参考 s15 重构：抽公共 `run_turn`，新增 `queue_processor_loop` daemon 线程——agent 空闲（`agent_lock` 非阻塞抢占）时把到点 cron 任务投递成一轮 `[cron] …` 新回合，与用户回合共用 `agent_lock` 串行化、绝不打断进行中的对话；cron 回合 stdout 经 `run_turn_logged` 整体重定向进 `scheduler.log`，用户回合输出不受影响；空输入（裸回车）过滤。
     - `core/agent.py` / `background_task.py` 与 ch14 逐字一致（cron 不进 agent_loop，后台任务机制原样保留）；`.gitignore` 补 `.scheduled_tasks.json`、`scheduler.log`。
 
+## 提示词
+
+### blog-server
+
+```prompt
+开发一个个人博客系统。
+技术栈：HTML+CSS+JS+NODEJS
+功能：登录、发布、浏览，三个即可。其他的，例如点赞、阅读量、评论等都不需要！
+页面要求：白夜、极简、不要花里胡哨。
+
+MySQL：
+- host: 127.0.01
+- port: 3306
+- username: root
+- password: 123456
+```
+
+```prompt
+将 blog-server 转为 vue3 项目。先规划任务清单，后执行。
+```
